@@ -1,10 +1,143 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Cadastro de Produto</title>
+    <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-$END$
+<div class="container">
+    <h1>Cadastro de Produto</h1>
+
+    <section class="card">
+        <h2>Criar produto</h2>
+        <form id="createForm">
+            <label>Nome
+                <input type="text" id="createNome" placeholder="Nome do produto" required />
+            </label>
+            <label>Descrição
+                <input type="text" id="createDescricao" placeholder="Descrição" />
+            </label>
+            <label>Preço
+                <input type="number" step="0.01" id="createPreco" placeholder="0.00" required />
+            </label>
+            <label>Estoque
+                <input type="number" id="createEstoque" placeholder="0" required />
+            </label>
+            <button type="submit">Criar</button>
+        </form>
+        <pre id="createResult" class="result"></pre>
+    </section>
+
+    <section class="card">
+        <h2>Buscar por nome</h2>
+        <form id="getForm">
+            <label>Nome
+                <input type="text" id="getNome" placeholder="Nome do produto" required />
+            </label>
+            <button type="submit">Buscar</button>
+        </form>
+        <pre id="getResult" class="result"></pre>
+    </section>
+
+    <section class="card">
+        <h2>Atualizar produto</h2>
+        <form id="updateForm">
+            <label>Nome atual (chave)
+                <input type="text" id="updateNomeKey" placeholder="Nome atual" required />
+            </label>
+            <label>Novo nome
+                <input type="text" id="updateNome" placeholder="Novo nome" />
+            </label>
+            <label>Nova descrição
+                <input type="text" id="updateDescricao" placeholder="Nova descrição" />
+            </label>
+            <label>Novo preço
+                <input type="number" step="0.01" id="updatePreco" placeholder="0.00" />
+            </label>
+            <label>Novo estoque
+                <input type="number" id="updateEstoque" placeholder="0" />
+            </label>
+            <button type="submit">Atualizar</button>
+        </form>
+        <pre id="updateResult" class="result"></pre>
+    </section>
+
+    <section class="card">
+        <h2>Deletar por nome</h2>
+        <form id="deleteForm">
+            <label>Nome
+                <input type="text" id="deleteNome" placeholder="Nome do produto" required />
+            </label>
+            <button type="submit" class="danger">Deletar</button>
+        </form>
+        <pre id="deleteResult" class="result"></pre>
+    </section>
+</div>
+
+<script>
+    const baseUrl = "/produto";
+
+    const toJson = async (res) => {
+      const text = await res.text();
+      try { return text ? JSON.parse(text) : {}; } catch { return { raw: text }; }
+    };
+
+    document.getElementById("createForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+            const payload = {
+                nome: document.getElementById("createNome").value,
+                descricao: document.getElementById("createDescricao").value || null,
+                preco: parseFloat(document.getElementById("createPreco").value),
+                estoque: parseInt(document.getElementById("createEstoque").value, 10)
+            };
+      const res = await fetch(baseUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      document.getElementById("createResult").textContent =
+        res.ok ? "Criado com sucesso." : `Erro: ${res.status}`;
+    });
+
+    document.getElementById("getForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+    const nome = encodeURIComponent(document.getElementById("getNome").value);
+    const res = await fetch(`${baseUrl}?nome=${nome}`);
+      const data = await toJson(res);
+      document.getElementById("getResult").textContent = res.ok ? JSON.stringify(data, null, 2) : `Erro: ${res.status}`;
+    });
+
+    document.getElementById("updateForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+            const nomeKey = encodeURIComponent(document.getElementById("updateNomeKey").value);
+            const payload = {
+                nome: document.getElementById("updateNome").value || null,
+                descricao: document.getElementById("updateDescricao").value || null,
+                preco: document.getElementById("updatePreco").value ? parseFloat(document.getElementById("updatePreco").value) : null,
+                estoque: document.getElementById("updateEstoque").value ? parseInt(document.getElementById("updateEstoque").value, 10) : null
+            };
+      // Remove campos nulos para não sobreescrever com null
+      Object.keys(payload).forEach(k => payload[k] == null && delete payload[k]);
+
+            const res = await fetch(`${baseUrl}?nome=${nomeKey}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      document.getElementById("updateResult").textContent =
+        res.ok ? "Atualizado com sucesso." : `Erro: ${res.status}`;
+    });
+
+    document.getElementById("deleteForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+    const nome = encodeURIComponent(document.getElementById("deleteNome").value);
+    const res = await fetch(`${baseUrl}?nome=${nome}`, { method: "DELETE" });
+      document.getElementById("deleteResult").textContent =
+        res.ok ? "Deletado com sucesso." : `Erro: ${res.status}`;
+    });
+</script>
 </body>
 </html>
